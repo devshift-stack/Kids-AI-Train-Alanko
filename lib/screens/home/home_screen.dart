@@ -10,6 +10,7 @@ import '../../widgets/common/category_card.dart';
 import '../games/letters/letters_game_screen.dart';
 import '../games/numbers/numbers_game_screen.dart';
 import '../games/colors/colors_game_screen.dart';
+import '../chat/alanko_chat_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -133,46 +134,82 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             flex: 2,
-            child: AlanCharacter(size: 140),
+            child: GestureDetector(
+              onTap: _openChat,
+              child: const AlanCharacter(size: 140),
+            ),
           ),
           Expanded(
             flex: 3,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                boxShadow: AppTheme.cardShadow,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'alan_says'.tr(),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
+            child: GestureDetector(
+              onTap: _openChat,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Alanko sagt:',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'ready_to_learn'.tr(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Tippe mich an um zu chatten!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.alanGradient,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.chat, color: Colors.white, size: 16),
+                          SizedBox(width: 6),
+                          Text(
+                            'Chat mit Alanko',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ],
       ),
     ).animate().fadeIn(duration: 500.ms, delay: 200.ms);
+  }
+
+  void _openChat() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AlankoChatScreen()),
+    );
   }
 
   Widget _buildCategoriesGrid(AgeAdaptiveSettings settings) {
