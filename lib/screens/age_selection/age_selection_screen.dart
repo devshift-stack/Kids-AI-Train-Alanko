@@ -67,19 +67,19 @@ class _AgeSelectionScreenState extends ConsumerState<AgeSelectionScreen> {
     // Clear onboarding state
     ref.read(onboardingStateProvider.notifier).state = const OnboardingState();
 
-    if (mounted) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const HomeScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 500),
-        ),
-      );
-    }
+    if (!mounted) return;
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
   }
 
   @override
@@ -207,13 +207,13 @@ class _AgeButton extends StatelessWidget {
           color: isSelected ? color : Colors.white,
           borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           border: Border.all(
-            color: isSelected ? color : color.withOpacity(0.3),
+            color: isSelected ? color : color.withValues(alpha: 0.3),
             width: isSelected ? 3 : 2,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: color.withOpacity(0.4),
+                    color: color.withValues(alpha: 0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),

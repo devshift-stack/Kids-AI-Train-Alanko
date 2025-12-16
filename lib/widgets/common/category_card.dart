@@ -63,7 +63,7 @@ class CategoryCard extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.15),
+                        color: color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                       ),
                       child: Icon(
@@ -98,7 +98,7 @@ class CategoryCard extends StatelessWidget {
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                   ),
                   child: const Center(

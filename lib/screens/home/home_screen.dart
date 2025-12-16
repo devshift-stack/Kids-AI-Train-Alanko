@@ -20,6 +20,8 @@ import '../../services/youtube_reward_service.dart';
 import '../profile/profile_screen.dart';
 import '../settings/settings_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
+import '../video_reward/video_reward_screen.dart';
+import '../../services/parental_control_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -103,6 +105,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           Row(
             children: [
+              _buildVideoRewardButton(),
+              const SizedBox(width: 8),
               _buildLeaderboardButton(),
               const SizedBox(width: 8),
               _buildHeaderButton(
@@ -135,6 +139,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           boxShadow: AppTheme.cardShadow,
         ),
         child: Icon(icon, color: AppTheme.primaryColor),
+      ),
+    );
+  }
+
+  Widget _buildVideoRewardButton() {
+    final parentalService = ref.watch(parentalControlServiceProvider);
+
+    // Only show if parent has enabled video rewards
+    if (!parentalService.settings.youtubeRewardEnabled) {
+      return const SizedBox.shrink();
+    }
+
+    return GestureDetector(
+      onTap: _openVideoReward,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF0000), Color(0xFFCC0000)],
+          ),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.play_circle_filled, color: Colors.white, size: 20),
+          ],
+        ),
       ),
     );
   }
@@ -448,6 +481,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+    );
+  }
+
+  void _openVideoReward() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const VideoRewardScreen()),
     );
   }
 

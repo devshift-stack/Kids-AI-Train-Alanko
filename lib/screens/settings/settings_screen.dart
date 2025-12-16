@@ -123,7 +123,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.volume_up, color: Colors.blue),
@@ -190,7 +190,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onChanged: (value) {
                     setState(() => _musicEnabled = value);
                   },
-                  activeColor: AppTheme.primaryColor,
+                  activeTrackColor: AppTheme.primaryColor,
                 ),
               ],
             ),
@@ -225,7 +225,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 value: value,
                 onChanged: onChanged,
                 activeColor: AppTheme.primaryColor,
-                inactiveColor: AppTheme.primaryColor.withOpacity(0.2),
+                inactiveColor: AppTheme.primaryColor.withValues(alpha: 0.2),
               ),
             ],
           ),
@@ -273,7 +273,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.language, color: Colors.green),
@@ -341,7 +341,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.1),
+                    color: Colors.amber.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.leaderboard, color: Colors.amber),
@@ -431,7 +431,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.1),
+                    color: Colors.purple.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.info_outline, color: Colors.purple),

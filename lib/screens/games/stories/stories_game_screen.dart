@@ -50,8 +50,6 @@ class _StoriesGameScreenState extends ConsumerState<StoriesGameScreen> {
 
     final profile = ref.read(activeProfileProvider);
     final age = profile?.age ?? 6;
-    final adaptive = ref.read(adaptiveLearningServiceProvider);
-    final params = adaptive.getGameParameters(GameType.stories);
 
     ref.read(alanVoiceServiceProvider).speak(
       'Čekaj malo, smišljam priču...',
@@ -66,7 +64,7 @@ class _StoriesGameScreenState extends ConsumerState<StoriesGameScreen> {
     }
 
     // Record story as "learned" for adaptive tracking
-    adaptive.recordResult(
+    ref.read(adaptiveLearningServiceProvider).recordResult(
       gameType: GameType.stories,
       correct: true,
       responseTimeMs: 5000,
@@ -215,7 +213,7 @@ I živjeli su sretno do kraja života. Kraj!
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
-          color: isSelected ? (theme['color'] as Color).withOpacity(0.2) : Colors.white,
+          color: isSelected ? (theme['color'] as Color).withValues(alpha: 0.2) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? theme['color'] as Color : Colors.transparent,
@@ -273,7 +271,7 @@ I živjeli su sretno do kraja života. Kraj!
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(

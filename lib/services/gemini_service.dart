@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'user_profile_service.dart';
@@ -16,7 +17,7 @@ class GeminiService {
 
   void _initModel() {
     if (_apiKey == 'YOUR_GEMINI_API_KEY') {
-      print('⚠️ Gemini API Key nicht gesetzt! Hole einen kostenlosen Key von https://aistudio.google.com/apikey');
+      debugPrint('⚠️ Gemini API Key nicht gesetzt! Hole einen kostenlosen Key von https://aistudio.google.com/apikey');
       return;
     }
 
@@ -83,7 +84,7 @@ Beispiel für gute Antworten:
       final response = await _chat!.sendMessage(Content.text(question));
       return response.text ?? 'Hmm, das weiß ich nicht. Frag mich etwas anderes!';
     } catch (e) {
-      print('Gemini Error: $e');
+      debugPrint('Gemini Error: $e');
       if (e.toString().contains('quota')) {
         return 'Alanko braucht eine kleine Pause. Wir haben heute schon viel geredet!';
       }
@@ -113,7 +114,7 @@ Die Geschichte soll:
       final response = await _model!.generateContent([Content.text(prompt)]);
       return response.text ?? 'Es war einmal... Oh, ich habe den Faden verloren!';
     } catch (e) {
-      print('Gemini Story Error: $e');
+      debugPrint('Gemini Story Error: $e');
       return 'Alanko ist gerade müde. Die Geschichte erzähle ich dir morgen!';
     }
   }
@@ -141,7 +142,7 @@ Richtig: [A/B/C]
       final response = await _model!.generateContent([Content.text(prompt)]);
       return response.text ?? 'Quiz konnte nicht erstellt werden.';
     } catch (e) {
-      print('Gemini Quiz Error: $e');
+      debugPrint('Gemini Quiz Error: $e');
       return 'Quiz nicht verfügbar.';
     }
   }
