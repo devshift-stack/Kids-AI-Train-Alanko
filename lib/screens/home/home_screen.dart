@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/age_adaptive_service.dart';
 import '../../services/alan_voice_service.dart';
+import '../../services/user_profile_service.dart';
 import '../../widgets/alan/alan_character.dart';
 import '../../widgets/common/category_card.dart';
 import '../games/letters/letters_game_screen.dart';
@@ -14,6 +15,9 @@ import '../games/shapes/shapes_game_screen.dart';
 import '../games/animals/animals_game_screen.dart';
 import '../games/stories/stories_game_screen.dart';
 import '../chat/alanko_chat_screen.dart';
+import '../profile/profile_screen.dart';
+import '../settings/settings_screen.dart';
+import '../leaderboard/leaderboard_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -97,6 +101,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           Row(
             children: [
+              _buildLeaderboardButton(),
+              const SizedBox(width: 8),
               _buildHeaderButton(
                 icon: Icons.settings,
                 onTap: () => _openSettings(),
@@ -127,6 +133,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           boxShadow: AppTheme.cardShadow,
         ),
         child: Icon(icon, color: AppTheme.primaryColor),
+      ),
+    );
+  }
+
+  Widget _buildLeaderboardButton() {
+    final profile = ref.watch(activeProfileProvider);
+
+    // Only show if parent has enabled leaderboard visibility
+    if (profile == null || !profile.canSeeLeaderboard) {
+      return const SizedBox.shrink();
+    }
+
+    return GestureDetector(
+      onTap: _openLeaderboard,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+          ),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('🏆', style: TextStyle(fontSize: 18)),
+          ],
+        ),
       ),
     );
   }
@@ -383,11 +418,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _openSettings() {
-    // Navigate to settings
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+    );
   }
 
   void _openProfile() {
-    // Navigate to profile
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+    );
+  }
+
+  void _openLeaderboard() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+    );
   }
 
   void _openCategory(String route) {

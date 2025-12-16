@@ -12,6 +12,10 @@ class UserProfile {
   final int age;
   final String languageCode;
   final DateTime createdAt;
+  // Leaderboard consent - set by parents
+  final bool canSeeLeaderboard;
+  final bool canBeOnLeaderboard;
+  final String? leaderboardDisplayName; // Optional nickname for privacy
 
   const UserProfile({
     required this.id,
@@ -20,6 +24,9 @@ class UserProfile {
     required this.age,
     this.languageCode = 'bs',
     required this.createdAt,
+    this.canSeeLeaderboard = false, // Default: disabled
+    this.canBeOnLeaderboard = false, // Default: disabled
+    this.leaderboardDisplayName,
   });
 
   bool get isComplete => name.isNotEmpty && age > 0;
@@ -52,6 +59,9 @@ class UserProfile {
     'age': age,
     'languageCode': languageCode,
     'createdAt': createdAt.toIso8601String(),
+    'canSeeLeaderboard': canSeeLeaderboard,
+    'canBeOnLeaderboard': canBeOnLeaderboard,
+    'leaderboardDisplayName': leaderboardDisplayName,
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -61,6 +71,9 @@ class UserProfile {
     age: json['age'] as int,
     languageCode: json['languageCode'] as String? ?? 'bs',
     createdAt: DateTime.parse(json['createdAt'] as String),
+    canSeeLeaderboard: json['canSeeLeaderboard'] as bool? ?? false,
+    canBeOnLeaderboard: json['canBeOnLeaderboard'] as bool? ?? false,
+    leaderboardDisplayName: json['leaderboardDisplayName'] as String?,
   );
 
   UserProfile copyWith({
@@ -70,6 +83,9 @@ class UserProfile {
     int? age,
     String? languageCode,
     DateTime? createdAt,
+    bool? canSeeLeaderboard,
+    bool? canBeOnLeaderboard,
+    String? leaderboardDisplayName,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -78,6 +94,9 @@ class UserProfile {
       age: age ?? this.age,
       languageCode: languageCode ?? this.languageCode,
       createdAt: createdAt ?? this.createdAt,
+      canSeeLeaderboard: canSeeLeaderboard ?? this.canSeeLeaderboard,
+      canBeOnLeaderboard: canBeOnLeaderboard ?? this.canBeOnLeaderboard,
+      leaderboardDisplayName: leaderboardDisplayName ?? this.leaderboardDisplayName,
     );
   }
 
@@ -161,13 +180,32 @@ class MultiProfileService {
     return profile;
   }
 
-  Future<void> updateProfile(UserProfile profile) async {
-    final index = _profiles.indexWhere((p) => p.id == profile.id);
+  Future<void> updateProfile(
+    String id, {
+    String? name,
+    Gender? gender,
+    int? age,
+    String? languageCode,
+    bool? canSeeLeaderboard,
+    bool? canBeOnLeaderboard,
+    String? leaderboardDisplayName,
+  }) async {
+    final index = _profiles.indexWhere((p) => p.id == id);
     if (index >= 0) {
-      _profiles[index] = profile;
+      final current = _profiles[index];
+      final updated = current.copyWith(
+        name: name,
+        gender: gender,
+        age: age,
+        languageCode: languageCode,
+        canSeeLeaderboard: canSeeLeaderboard,
+        canBeOnLeaderboard: canBeOnLeaderboard,
+        leaderboardDisplayName: leaderboardDisplayName,
+      );
+      _profiles[index] = updated;
       await _saveProfiles();
-      if (_activeProfile?.id == profile.id) {
-        _activeProfile = profile;
+      if (_activeProfile?.id == id) {
+        _activeProfile = updated;
       }
     }
   }
