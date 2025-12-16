@@ -10,6 +10,9 @@ import '../../widgets/common/category_card.dart';
 import '../games/letters/letters_game_screen.dart';
 import '../games/numbers/numbers_game_screen.dart';
 import '../games/colors/colors_game_screen.dart';
+import '../games/shapes/shapes_game_screen.dart';
+import '../games/animals/animals_game_screen.dart';
+import '../games/stories/stories_game_screen.dart';
 import '../chat/alanko_chat_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -399,6 +402,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       case '/colors':
         screen = const ColorsGameScreen();
+        break;
+      case '/shapes':
+        screen = const ShapesGameScreen();
+        break;
+      case '/animals':
+        screen = const AnimalsGameScreen();
+        break;
+      case '/stories':
+        screen = const StoriesGameScreen();
         break;
       default:
         // Coming soon message
