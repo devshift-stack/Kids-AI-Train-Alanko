@@ -17,7 +17,6 @@ class ShapesGameScreen extends ConsumerStatefulWidget {
 
 class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
   int _score = 0;
-  int _totalQuestions = 0;
   bool _isLoading = true;
   bool _showResult = false;
   bool _isCorrect = false;
@@ -142,7 +141,6 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
         ? DateTime.now().difference(_questionStartTime!).inMilliseconds
         : 5000;
 
-    _totalQuestions++;
     final correctShape = _currentQuestion['shape'] ?? '';
     _isCorrect = selected['name'] == correctShape || selected['nameDe'] == _currentQuestion['shapeDe'];
 

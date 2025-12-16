@@ -333,7 +333,7 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.purple.withOpacity(0.3),
+                      color: Colors.purple.withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -378,7 +378,7 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
         borderColor = Colors.green;
         borderWidth = 4;
       } else {
-        borderColor = Colors.red.withOpacity(0.5);
+        borderColor = Colors.red.withValues(alpha: 0.5);
         borderWidth = 2;
       }
     }
@@ -398,7 +398,7 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
           border: Border.all(color: borderColor, width: borderWidth),
           boxShadow: [
             BoxShadow(
-              color: displayColor.withOpacity(0.4),
+              color: displayColor.withValues(alpha: 0.4),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -415,7 +415,7 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
                 margin: const EdgeInsets.symmetric(horizontal: 8),
                 padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(

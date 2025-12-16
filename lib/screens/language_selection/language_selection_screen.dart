@@ -207,7 +207,7 @@ class _LanguageSelectionScreenState
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryColor.withOpacity(0.3),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
                   blurRadius: 30,
                   offset: const Offset(0, 15),
                 ),
@@ -385,7 +385,7 @@ class _LanguageSelectionScreenState
           borderRadius: BorderRadius.circular(16),
           boxShadow: AppTheme.cardShadow,
           border: Border.all(
-            color: AppTheme.primaryColor.withOpacity(0.2),
+            color: AppTheme.primaryColor.withValues(alpha: 0.2),
             width: 2,
           ),
         ),
