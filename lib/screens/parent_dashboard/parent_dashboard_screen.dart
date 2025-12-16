@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/age_adaptive_service.dart';
+import '../../services/youtube_reward_service.dart';
+import '../../models/youtube/youtube_settings.dart';
 
 class ParentDashboardScreen extends ConsumerStatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -17,10 +20,73 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   bool _isAuthenticated = false;
   final String _parentPin = '1234'; // In production, store securely
 
+  // YouTube Settings State
+  bool _youtubeEnabled = false;
+  int _watchMinutes = 10;
+  int _tasksRequired = 3;
+  int _dailyLimit = 60;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadYouTubeSettings();
+  }
+
   @override
   void dispose() {
     _pinController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadYouTubeSettings() async {
+    // TODO: Load from Firebase when child ID is available
+    // For now, load from YouTube service
+    final service = ref.read(youtubeRewardServiceProvider);
+    setState(() {
+      _youtubeEnabled = service.settings.isEnabled;
+      _watchMinutes = service.settings.watchMinutesAllowed;
+      _tasksRequired = service.settings.tasksRequired;
+      _dailyLimit = service.settings.dailyLimitMinutes;
+    });
+  }
+
+  Future<void> _saveYouTubeSettings() async {
+    // Save to Firebase
+    // TODO: Get child ID properly
+    final settings = YouTubeSettings(
+      isEnabled: _youtubeEnabled,
+      watchMinutesAllowed: _watchMinutes,
+      tasksRequired: _tasksRequired,
+      dailyLimitMinutes: _dailyLimit,
+    );
+
+    try {
+      // For demo, save to a test child document
+      await FirebaseFirestore.instance
+          .collection('children')
+          .doc('demo_child')
+          .collection('settings')
+          .doc('youtube')
+          .set(settings.toMap());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('YouTube Einstellungen gespeichert!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fehler: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _verifyPin() {
@@ -193,6 +259,11 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
 
             const SizedBox(height: 16),
 
+            // YouTube Reward Settings (NEU)
+            _buildYouTubeSettingsCard(),
+
+            const SizedBox(height: 16),
+
             // Settings Section
             _buildInfoCard(
               title: 'Settings',
@@ -228,6 +299,181 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildYouTubeSettingsCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        boxShadow: AppTheme.cardShadow,
+        border: Border.all(
+          color: _youtubeEnabled ? Colors.red.shade300 : Colors.grey.shade200,
+          width: 2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.play_circle, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'YouTube Belohnungssystem',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Videos nach erledigten Aufgaben',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _youtubeEnabled,
+                activeColor: Colors.red,
+                onChanged: (value) {
+                  setState(() => _youtubeEnabled = value);
+                },
+              ),
+            ],
+          ),
+
+          if (_youtubeEnabled) ...[
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 16),
+
+            // Watch Minutes Setting
+            _buildSliderSetting(
+              label: 'Minuten schauen vor Aufgabe',
+              value: _watchMinutes.toDouble(),
+              min: 5,
+              max: 30,
+              divisions: 5,
+              suffix: ' Min',
+              onChanged: (value) {
+                setState(() => _watchMinutes = value.round());
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // Tasks Required Setting
+            _buildSliderSetting(
+              label: 'Aufgaben pro Pause',
+              value: _tasksRequired.toDouble(),
+              min: 1,
+              max: 10,
+              divisions: 9,
+              suffix: ' Aufgaben',
+              onChanged: (value) {
+                setState(() => _tasksRequired = value.round());
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // Daily Limit Setting
+            _buildSliderSetting(
+              label: 'Tägliches Limit',
+              value: _dailyLimit.toDouble(),
+              min: 15,
+              max: 120,
+              divisions: 7,
+              suffix: ' Min',
+              onChanged: (value) {
+                setState(() => _dailyLimit = value.round());
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Save Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _saveYouTubeSettings,
+                icon: const Icon(Icons.save),
+                label: const Text('Einstellungen speichern'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliderSetting({
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required int divisions,
+    required String suffix,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${value.round()}$suffix',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        Slider(
+          value: value,
+          min: min,
+          max: max,
+          divisions: divisions,
+          activeColor: Colors.red,
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 

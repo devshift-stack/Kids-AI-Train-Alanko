@@ -14,7 +14,9 @@ import '../games/colors/colors_game_screen.dart';
 import '../games/shapes/shapes_game_screen.dart';
 import '../games/animals/animals_game_screen.dart';
 import '../games/stories/stories_game_screen.dart';
+import '../youtube_reward/youtube_reward_screen.dart';
 import '../chat/alanko_chat_screen.dart';
+import '../../services/youtube_reward_service.dart';
 import '../profile/profile_screen.dart';
 import '../settings/settings_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
@@ -253,6 +255,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildCategoriesGrid(AgeAdaptiveSettings settings) {
     final categories = _getCategoriesForAge(settings.ageGroup);
 
+    // YouTube hinzufügen wenn aktiviert
+    final youtubeService = ref.watch(youtubeRewardServiceProvider);
+    if (youtubeService.shouldShowYouTube) {
+      categories.add({
+        'title': 'Videos',
+        'icon': Icons.play_circle_filled,
+        'color': const Color(0xFFFF0000),
+        'route': '/youtube',
+      });
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -459,6 +472,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       case '/stories':
         screen = const StoriesGameScreen();
+        break;
+      case '/youtube':
+        screen = const YouTubeRewardScreen();
         break;
       default:
         // Coming soon message
