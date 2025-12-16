@@ -2,7 +2,7 @@ class AppConstants {
   AppConstants._();
 
   // App Info
-  static const String appName = 'WonderBox';
+  static const String appName = 'Alanko AI';
   static const String appVersion = '1.0.0';
 
   // Age Groups
