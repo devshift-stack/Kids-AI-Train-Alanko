@@ -5,11 +5,13 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
 
 import 'core/theme/app_theme.dart';
 import 'services/age_adaptive_service.dart';
 import 'services/user_profile_service.dart';
+import 'services/firebase_service.dart';
 import 'screens/language_selection/language_selection_screen.dart';
 import 'screens/profile_selection/profile_selection_screen.dart';
 
@@ -20,6 +22,9 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize Crashlytics
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
   // Initialize localization
   await EasyLocalization.ensureInitialized();
@@ -74,10 +79,14 @@ class AlankoApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
     return MaterialApp(
       title: 'Alanko AI',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
@@ -127,6 +136,17 @@ class _AppStartupState extends ConsumerState<AppStartup>
   }
 
   Future<void> _initializeApp() async {
+    // Initialize Firebase services
+    final firebaseService = ref.read(firebaseServiceProvider);
+
+    // Enable offline mode
+    await firebaseService.enableOfflineMode();
+
+    // Sign in anonymously to Firebase
+    if (!firebaseService.isSignedIn) {
+      await firebaseService.signInAnonymously();
+    }
+
     // Simulate initialization time for splash effect
     await Future.delayed(const Duration(seconds: 2));
 

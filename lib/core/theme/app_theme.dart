@@ -1,5 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Theme mode provider
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+  return ThemeModeNotifier();
+});
+
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  ThemeModeNotifier() : super(ThemeMode.light) {
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isDark = prefs.getBool('dark_mode') ?? false;
+    state = isDark ? ThemeMode.dark : ThemeMode.light;
+  }
+
+  Future<void> toggleTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (state == ThemeMode.light) {
+      state = ThemeMode.dark;
+      await prefs.setBool('dark_mode', true);
+    } else {
+      state = ThemeMode.light;
+      await prefs.setBool('dark_mode', false);
+    }
+  }
+
+  Future<void> setDarkMode(bool isDark) async {
+    final prefs = await SharedPreferences.getInstance();
+    state = isDark ? ThemeMode.dark : ThemeMode.light;
+    await prefs.setBool('dark_mode', isDark);
+  }
+}
 
 class AppTheme {
   AppTheme._();
@@ -163,5 +199,89 @@ class AppTheme {
     if (age <= 5) return baseSize * 1.3; // Larger for preschool
     if (age <= 8) return baseSize * 1.15; // Medium for early school
     return baseSize; // Normal for late school
+  }
+
+  // Dark Theme
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: Brightness.dark,
+        primary: primaryColor,
+        secondary: secondaryColor,
+        surface: const Color(0xFF1E1E2E),
+        error: errorColor,
+      ),
+      scaffoldBackgroundColor: const Color(0xFF121218),
+      textTheme: GoogleFonts.nunitoTextTheme(ThemeData.dark().textTheme).copyWith(
+        displayLarge: GoogleFonts.nunito(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        displayMedium: GoogleFonts.nunito(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        headlineLarge: GoogleFonts.nunito(
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+        headlineMedium: GoogleFonts.nunito(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        titleLarge: GoogleFonts.nunito(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        bodyLarge: GoogleFonts.nunito(
+          fontSize: 16,
+          color: Colors.white,
+        ),
+        bodyMedium: GoogleFonts.nunito(
+          fontSize: 14,
+          color: Colors.white70,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMedium),
+          ),
+          textStyle: GoogleFonts.nunito(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusLarge),
+        ),
+        color: const Color(0xFF1E1E2E),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.nunito(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+    );
   }
 }
