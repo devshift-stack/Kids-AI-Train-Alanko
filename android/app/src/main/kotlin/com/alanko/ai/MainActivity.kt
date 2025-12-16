@@ -1,4 +1,4 @@
-package com.wonderbox.wonderbox
+package com.alanko.ai
 
 import io.flutter.embedding.android.FlutterActivity
 
