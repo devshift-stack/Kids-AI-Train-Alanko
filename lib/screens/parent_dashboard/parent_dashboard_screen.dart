@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/age_adaptive_service.dart';
+import '../../services/youtube_reward_service.dart';
+import '../../services/parent_child_service.dart';
+import '../../models/youtube/youtube_settings.dart';
 
 class ParentDashboardScreen extends ConsumerStatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -15,7 +18,26 @@ class ParentDashboardScreen extends ConsumerStatefulWidget {
 class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   final _pinController = TextEditingController();
   bool _isAuthenticated = false;
-  final String _parentPin = '1234'; // In production, store securely
+  bool _isLoading = true;
+
+  // YouTube Settings State (standardmäßig AUS)
+  bool _youtubeEnabled = false;
+  int _watchMinutes = 10;
+  int _tasksRequired = 3;
+  int _dailyLimit = 60;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    final parentService = ref.read(parentChildServiceProvider);
+    await parentService.initialize();
+    await _loadYouTubeSettings();
+    setState(() => _isLoading = false);
+  }
 
   @override
   void dispose() {
@@ -23,18 +45,84 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     super.dispose();
   }
 
-  void _verifyPin() {
-    if (_pinController.text == _parentPin) {
+  Future<void> _loadYouTubeSettings() async {
+    final parentService = ref.read(parentChildServiceProvider);
+    final settings = await parentService.loadYouTubeSettings();
+
+    if (settings != null) {
+      setState(() {
+        _youtubeEnabled = settings['isEnabled'] ?? false;
+        _watchMinutes = settings['watchMinutesAllowed'] ?? 10;
+        _tasksRequired = settings['tasksRequired'] ?? 3;
+        _dailyLimit = settings['dailyLimitMinutes'] ?? 60;
+      });
+    }
+    // Wenn keine Settings vorhanden, bleibt YouTube AUS (default)
+  }
+
+  Future<void> _saveYouTubeSettings() async {
+    final parentService = ref.read(parentChildServiceProvider);
+
+    final settings = YouTubeSettings(
+      isEnabled: _youtubeEnabled,
+      watchMinutesAllowed: _watchMinutes,
+      tasksRequired: _tasksRequired,
+      dailyLimitMinutes: _dailyLimit,
+    );
+
+    try {
+      await parentService.saveYouTubeSettings(settings.toMap());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('YouTube Einstellungen gespeichert!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fehler: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _verifyPin() async {
+    final parentService = ref.read(parentChildServiceProvider);
+
+    // Wenn noch kein Parent Account existiert, erstellen
+    if (parentService.parentId == null) {
+      await parentService.createParentAccount(pin: _pinController.text);
+      setState(() => _isAuthenticated = true);
+      return;
+    }
+
+    // Sonst PIN verifizieren
+    final isValid = await parentService.verifyPin(_pinController.text);
+    if (isValid) {
       setState(() => _isAuthenticated = true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Incorrect PIN')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Falscher PIN')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     if (!_isAuthenticated) {
       return _buildPinScreen();
     }
@@ -42,9 +130,12 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   }
 
   Widget _buildPinScreen() {
+    final parentService = ref.watch(parentChildServiceProvider);
+    final isFirstTime = parentService.parentId == null;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parent Access'),
+        title: const Text('Eltern-Zugang'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
@@ -63,13 +154,16 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Enter Parent PIN',
+                isFirstTime ? 'PIN erstellen' : 'PIN eingeben',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 16),
               Text(
-                'This area is for parents only',
+                isFirstTime
+                    ? 'Erstelle einen 4-stelligen PIN für den Elternbereich'
+                    : 'Dieser Bereich ist nur für Eltern',
                 style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
               SizedBox(
@@ -83,6 +177,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                   style: const TextStyle(fontSize: 24, letterSpacing: 8),
                   decoration: InputDecoration(
                     counterText: '',
+                    hintText: '• • • •',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                     ),
@@ -93,7 +188,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _verifyPin,
-                child: const Text('Enter'),
+                child: Text(isFirstTime ? 'PIN erstellen' : 'Entsperren'),
               ),
             ],
           ),
@@ -193,6 +288,11 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
 
             const SizedBox(height: 16),
 
+            // YouTube Reward Settings (NEU)
+            _buildYouTubeSettingsCard(),
+
+            const SizedBox(height: 16),
+
             // Settings Section
             _buildInfoCard(
               title: 'Settings',
@@ -228,6 +328,181 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildYouTubeSettingsCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        boxShadow: AppTheme.cardShadow,
+        border: Border.all(
+          color: _youtubeEnabled ? Colors.red.shade300 : Colors.grey.shade200,
+          width: 2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.play_circle, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'YouTube Belohnungssystem',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Videos nach erledigten Aufgaben',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _youtubeEnabled,
+                activeColor: Colors.red,
+                onChanged: (value) {
+                  setState(() => _youtubeEnabled = value);
+                },
+              ),
+            ],
+          ),
+
+          if (_youtubeEnabled) ...[
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 16),
+
+            // Watch Minutes Setting
+            _buildSliderSetting(
+              label: 'Minuten schauen vor Aufgabe',
+              value: _watchMinutes.toDouble(),
+              min: 5,
+              max: 30,
+              divisions: 5,
+              suffix: ' Min',
+              onChanged: (value) {
+                setState(() => _watchMinutes = value.round());
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // Tasks Required Setting
+            _buildSliderSetting(
+              label: 'Aufgaben pro Pause',
+              value: _tasksRequired.toDouble(),
+              min: 1,
+              max: 10,
+              divisions: 9,
+              suffix: ' Aufgaben',
+              onChanged: (value) {
+                setState(() => _tasksRequired = value.round());
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // Daily Limit Setting
+            _buildSliderSetting(
+              label: 'Tägliches Limit',
+              value: _dailyLimit.toDouble(),
+              min: 15,
+              max: 120,
+              divisions: 7,
+              suffix: ' Min',
+              onChanged: (value) {
+                setState(() => _dailyLimit = value.round());
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Save Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _saveYouTubeSettings,
+                icon: const Icon(Icons.save),
+                label: const Text('Einstellungen speichern'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliderSetting({
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required int divisions,
+    required String suffix,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${value.round()}$suffix',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        Slider(
+          value: value,
+          min: min,
+          max: max,
+          divisions: divisions,
+          activeColor: Colors.red,
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 
