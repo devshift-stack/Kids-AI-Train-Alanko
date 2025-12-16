@@ -67,19 +67,19 @@ class _AgeSelectionScreenState extends ConsumerState<AgeSelectionScreen> {
     // Clear onboarding state
     ref.read(onboardingStateProvider.notifier).state = const OnboardingState();
 
-    if (mounted) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const HomeScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 500),
-        ),
-      );
-    }
+    if (!mounted) return;
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
   }
 
   @override
