@@ -195,7 +195,7 @@ class _AppStartupState extends ConsumerState<AppStartup>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              color: AppTheme.primaryColor.withValues(alpha: 0.3),
                               blurRadius: 30,
                               offset: const Offset(0, 10),
                             ),
@@ -234,7 +234,7 @@ class _AppStartupState extends ConsumerState<AppStartup>
                           height: 40,
                           child: CircularProgressIndicator(
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.primaryColor.withOpacity(0.5),
+                              AppTheme.primaryColor.withValues(alpha: 0.5),
                             ),
                             strokeWidth: 3,
                           ),

@@ -395,7 +395,7 @@ class _AlankoChatScreenState extends ConsumerState<AlankoChatScreen> {
       width: 8,
       height: 8,
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.5),
+        color: AppTheme.primaryColor.withValues(alpha: 0.5),
         shape: BoxShape.circle,
       ),
     ).animate(
@@ -419,7 +419,7 @@ class _AlankoChatScreenState extends ConsumerState<AlankoChatScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -463,7 +463,7 @@ class _AlankoChatScreenState extends ConsumerState<AlankoChatScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: (_isListening ? Colors.red : AppTheme.primaryColor).withOpacity(0.3),
+                    color: (_isListening ? Colors.red : AppTheme.primaryColor).withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -495,7 +495,7 @@ class _AlankoChatScreenState extends ConsumerState<AlankoChatScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),

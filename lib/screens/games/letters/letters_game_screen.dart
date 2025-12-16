@@ -342,7 +342,7 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -390,7 +390,6 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
   }
 
   Widget _buildOptionCard(GameItem option) {
-    final bool isSelected = _showResult && option.id == _currentLetter.id;
     final bool isWrong = _showResult && !_isCorrect && option.id != _currentLetter.id;
 
     Color backgroundColor = Colors.white;

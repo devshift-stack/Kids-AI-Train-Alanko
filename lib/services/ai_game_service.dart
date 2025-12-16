@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'gemini_service.dart';
-import 'user_profile_service.dart';
 
 class AIGameService {
   final GeminiService _gemini;
