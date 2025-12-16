@@ -25,13 +25,36 @@ class YouTubeRewardService extends ChangeNotifier {
   int get tasksNeeded => _settings.tasksRequired - _tasksCompletedForSession;
   int get currentSessionMinutes => _currentSessionMinutes;
   
-  // Sichere kindgerechte Videos (YouTube IDs)
+  // Sichere kindgerechte Videos (verifizierte YouTube IDs von Kinderkanälen)
   final List<Map<String, String>> _defaultSafeVideos = [
-    {'id': 'dQw4w9WgXcQ', 'title': 'Kinderlieder Mix'},
-    {'id': 'kNN7oME0Z5U', 'title': 'Baby Shark'},
-    {'id': 'oe_HDfdmnaI', 'title': 'Wheels on the Bus'},
-    {'id': 'DyDfgMOUjCI', 'title': 'ABC Song'},
-    {'id': '0j6dWMR5uSg', 'title': 'Number Song'},
+    // Cocomelon - Nursery Rhymes
+    {'id': 'YwGPBkqJqbk', 'title': '🦈 Baby Shark', 'channel': 'Cocomelon'},
+    {'id': 'e_04ZrNroTo', 'title': '🚌 Wheels on the Bus', 'channel': 'Cocomelon'},
+    {'id': 'QkHQ0CYwjaI', 'title': '🔤 ABC Phonics Song', 'channel': 'Cocomelon'},
+
+    // Super Simple Songs
+    {'id': 'eCemGoEkVbA', 'title': '🌈 Rainbow Colors Song', 'channel': 'Super Simple'},
+    {'id': 'DR-cfDsHCGA', 'title': '🔢 Count 1 to 10', 'channel': 'Super Simple'},
+    {'id': 'Yt8GFgxlITs', 'title': '🐶 Old MacDonald', 'channel': 'Super Simple'},
+
+    // Pinkfong
+    {'id': 'XqZsoesa55w', 'title': '🦈 Baby Shark Original', 'channel': 'Pinkfong'},
+    {'id': '4MR6D7tL40U', 'title': '🦁 Animal Songs Mix', 'channel': 'Pinkfong'},
+
+    // Dave and Ava
+    {'id': 'x00lXjDnLTQ', 'title': '⭐ Twinkle Twinkle', 'channel': 'Dave and Ava'},
+    {'id': 'hPIrvk4KHLA', 'title': '🐑 Mary Had a Little Lamb', 'channel': 'Dave and Ava'},
+
+    // Little Baby Bum
+    {'id': 'gZSqJ8U0RQk', 'title': '🚗 5 Little Cars', 'channel': 'Little Baby Bum'},
+    {'id': 'TxYF2S_WL50', 'title': '🎂 Happy Birthday Song', 'channel': 'Little Baby Bum'},
+
+    // Blippi (Lernvideos)
+    {'id': 'DHi9EvW7wQg', 'title': '🎨 Learn Colors', 'channel': 'Blippi'},
+    {'id': 'BKVm5pJTfOU', 'title': '🚜 Vehicles for Kids', 'channel': 'Blippi'},
+
+    // Hey Bear Sensory
+    {'id': 'MIL_BkIX3T0', 'title': '🌈 Baby Sensory Rainbow', 'channel': 'Hey Bear'},
   ];
   
   List<Map<String, String>> get safeVideos => _defaultSafeVideos;

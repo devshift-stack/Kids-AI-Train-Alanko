@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/age_adaptive_service.dart';
 import '../../services/youtube_reward_service.dart';
+import '../../services/parent_child_service.dart';
 import '../../models/youtube/youtube_settings.dart';
 
 class ParentDashboardScreen extends ConsumerStatefulWidget {
@@ -18,9 +18,9 @@ class ParentDashboardScreen extends ConsumerStatefulWidget {
 class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   final _pinController = TextEditingController();
   bool _isAuthenticated = false;
-  final String _parentPin = '1234'; // In production, store securely
+  bool _isLoading = true;
 
-  // YouTube Settings State
+  // YouTube Settings State (standardmäßig AUS)
   bool _youtubeEnabled = false;
   int _watchMinutes = 10;
   int _tasksRequired = 3;
@@ -29,7 +29,14 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadYouTubeSettings();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    final parentService = ref.read(parentChildServiceProvider);
+    await parentService.initialize();
+    await _loadYouTubeSettings();
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -39,20 +46,23 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   }
 
   Future<void> _loadYouTubeSettings() async {
-    // TODO: Load from Firebase when child ID is available
-    // For now, load from YouTube service
-    final service = ref.read(youtubeRewardServiceProvider);
-    setState(() {
-      _youtubeEnabled = service.settings.isEnabled;
-      _watchMinutes = service.settings.watchMinutesAllowed;
-      _tasksRequired = service.settings.tasksRequired;
-      _dailyLimit = service.settings.dailyLimitMinutes;
-    });
+    final parentService = ref.read(parentChildServiceProvider);
+    final settings = await parentService.loadYouTubeSettings();
+
+    if (settings != null) {
+      setState(() {
+        _youtubeEnabled = settings['isEnabled'] ?? false;
+        _watchMinutes = settings['watchMinutesAllowed'] ?? 10;
+        _tasksRequired = settings['tasksRequired'] ?? 3;
+        _dailyLimit = settings['dailyLimitMinutes'] ?? 60;
+      });
+    }
+    // Wenn keine Settings vorhanden, bleibt YouTube AUS (default)
   }
 
   Future<void> _saveYouTubeSettings() async {
-    // Save to Firebase
-    // TODO: Get child ID properly
+    final parentService = ref.read(parentChildServiceProvider);
+
     final settings = YouTubeSettings(
       isEnabled: _youtubeEnabled,
       watchMinutesAllowed: _watchMinutes,
@@ -61,13 +71,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     );
 
     try {
-      // For demo, save to a test child document
-      await FirebaseFirestore.instance
-          .collection('children')
-          .doc('demo_child')
-          .collection('settings')
-          .doc('youtube')
-          .set(settings.toMap());
+      await parentService.saveYouTubeSettings(settings.toMap());
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -89,18 +93,36 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     }
   }
 
-  void _verifyPin() {
-    if (_pinController.text == _parentPin) {
+  Future<void> _verifyPin() async {
+    final parentService = ref.read(parentChildServiceProvider);
+
+    // Wenn noch kein Parent Account existiert, erstellen
+    if (parentService.parentId == null) {
+      await parentService.createParentAccount(pin: _pinController.text);
+      setState(() => _isAuthenticated = true);
+      return;
+    }
+
+    // Sonst PIN verifizieren
+    final isValid = await parentService.verifyPin(_pinController.text);
+    if (isValid) {
       setState(() => _isAuthenticated = true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Incorrect PIN')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Falscher PIN')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     if (!_isAuthenticated) {
       return _buildPinScreen();
     }
@@ -108,9 +130,12 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   }
 
   Widget _buildPinScreen() {
+    final parentService = ref.watch(parentChildServiceProvider);
+    final isFirstTime = parentService.parentId == null;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parent Access'),
+        title: const Text('Eltern-Zugang'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
@@ -129,13 +154,16 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Enter Parent PIN',
+                isFirstTime ? 'PIN erstellen' : 'PIN eingeben',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 16),
               Text(
-                'This area is for parents only',
+                isFirstTime
+                    ? 'Erstelle einen 4-stelligen PIN für den Elternbereich'
+                    : 'Dieser Bereich ist nur für Eltern',
                 style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
               SizedBox(
@@ -149,6 +177,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                   style: const TextStyle(fontSize: 24, letterSpacing: 8),
                   decoration: InputDecoration(
                     counterText: '',
+                    hintText: '• • • •',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                     ),
@@ -159,7 +188,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _verifyPin,
-                child: const Text('Enter'),
+                child: Text(isFirstTime ? 'PIN erstellen' : 'Entsperren'),
               ),
             ],
           ),
