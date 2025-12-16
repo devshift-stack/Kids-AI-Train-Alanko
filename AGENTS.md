@@ -404,7 +404,104 @@ dependencies:
 
 ---
 
-## 10. Kontakt
+## 10. Firebase Setup
+
+### Accounts & Projekte
+
+| Account | Firebase Projekt | Apps |
+|---------|------------------|------|
+| `admin@step2job.com` | `wonderbox-a944e` | Alanko, Lianko, Parent |
+
+### Firebase CLI Login
+
+```bash
+# Status prüfen
+firebase login:list
+
+# Falls nicht eingeloggt oder Token abgelaufen:
+firebase logout
+firebase login
+# → Browser öffnet sich → Mit admin@step2job.com einloggen
+
+# Projekte anzeigen (Test ob Login funktioniert)
+firebase projects:list
+```
+
+### FlutterFire CLI Setup
+
+```bash
+# CLI installieren
+dart pub global activate flutterfire_cli
+
+# Konfigurieren (erstellt Config-Dateien automatisch)
+flutterfire configure \
+  --project=wonderbox-a944e \
+  --platforms=android,ios \
+  --android-package-name=com.alanko.ai \
+  --ios-bundle-id=com.alanko.ai
+```
+
+### Config-Dateien
+
+| Datei | Plattform | Pfad |
+|-------|-----------|------|
+| `google-services.json` | Android | `android/app/google-services.json` |
+| `GoogleService-Info.plist` | iOS | `ios/Runner/GoogleService-Info.plist` |
+| `firebase_options.dart` | Flutter | `lib/firebase_options.dart` |
+
+### Manuelle Konfiguration (falls CLI nicht funktioniert)
+
+1. **Firebase Console öffnen:** https://console.firebase.google.com/project/wonderbox-a944e
+2. **Android App hinzufügen:**
+   - Package name: `com.alanko.ai`
+   - Download `google-services.json` → `android/app/`
+3. **iOS App hinzufügen:**
+   - Bundle ID: `com.alanko.ai`
+   - Download `GoogleService-Info.plist` → `ios/Runner/`
+
+### Firebase im Code initialisieren
+
+```dart
+// main.dart
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(MyApp());
+}
+```
+
+### Häufige Probleme
+
+**"Authentication Error: Your credentials are no longer valid"**
+```bash
+firebase logout
+firebase login
+```
+
+**"No projects found"**
+- Falscher Account eingeloggt
+- Mit `firebase login:list` prüfen welcher Account aktiv ist
+
+**"Project not found"**
+- Projekt-ID falsch geschrieben
+- Account hat keinen Zugriff auf das Projekt
+
+### Firebase Services in Alanko
+
+| Service | Status | Verwendung |
+|---------|--------|------------|
+| Firebase Auth | 🔜 Geplant | Anonyme Auth für Kinder |
+| Cloud Firestore | 🔜 Geplant | Profile, Leaderboards sync |
+| Firebase Analytics | 🔜 Geplant | Nutzungsstatistiken |
+
+---
+
+## 11. Kontakt
 
 Bei Fragen: Pull Request mit Frage erstellen oder Issue auf GitHub.
 

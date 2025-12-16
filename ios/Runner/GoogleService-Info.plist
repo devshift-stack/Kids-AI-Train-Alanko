@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.wonderbox.wonderbox</string>
+	<string>com.alanko.ai</string>
 	<key>PROJECT_ID</key>
 	<string>wonderbox-a944e</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:613304974084:ios:026dba58c734c6be5a2e51</string>
+	<string>1:613304974084:ios:5a7a5a23a01b0b6a5a2e51</string>
 </dict>
 </plist>

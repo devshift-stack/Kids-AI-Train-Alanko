@@ -24,10 +24,7 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
@@ -54,11 +51,19 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDuPpJvNErsgxTzsBhjAZzVT_WhQtzkoBg',
-    appId: '1:613304974084:ios:026dba58c734c6be5a2e51',
+    appId: '1:613304974084:ios:5a7a5a23a01b0b6a5a2e51',
     messagingSenderId: '613304974084',
     projectId: 'wonderbox-a944e',
     storageBucket: 'wonderbox-a944e.firebasestorage.app',
-    iosBundleId: 'com.wonderbox.wonderbox',
+    iosBundleId: 'com.alanko.ai',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyCT4SU9N7_xspBaRxkpMOAt4iBTMZs-X0Y',
+    appId: '1:613304974084:android:3d09c318c3669d465a2e51',
+    messagingSenderId: '613304974084',
+    projectId: 'wonderbox-a944e',
+    storageBucket: 'wonderbox-a944e.firebasestorage.app',
   );
 
 }
