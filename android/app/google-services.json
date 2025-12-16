@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "613304974084",
+    "project_id": "wonderbox-a944e",
+    "storage_bucket": "wonderbox-a944e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:613304974084:android:3d09c318c3669d465a2e51",
+        "android_client_info": {
+          "package_name": "com.alanko.ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCT4SU9N7_xspBaRxkpMOAt4iBTMZs-X0Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
