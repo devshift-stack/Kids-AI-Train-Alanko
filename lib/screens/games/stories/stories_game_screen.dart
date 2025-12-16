@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../services/alan_voice_service.dart';
 import '../../../services/ai_game_service.dart';
 import '../../../services/user_profile_service.dart';
+import '../../../services/adaptive_learning_service.dart';
 
 class StoriesGameScreen extends ConsumerStatefulWidget {
   const StoriesGameScreen({super.key});
@@ -49,6 +50,8 @@ class _StoriesGameScreenState extends ConsumerState<StoriesGameScreen> {
 
     final profile = ref.read(activeProfileProvider);
     final age = profile?.age ?? 6;
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    final params = adaptive.getGameParameters(GameType.stories);
 
     ref.read(alanVoiceServiceProvider).speak(
       'Čekaj malo, smišljam priču...',
@@ -61,6 +64,13 @@ class _StoriesGameScreenState extends ConsumerState<StoriesGameScreen> {
     } catch (e) {
       _currentStory = _getDefaultStory(theme);
     }
+
+    // Record story as "learned" for adaptive tracking
+    adaptive.recordResult(
+      gameType: GameType.stories,
+      correct: true,
+      responseTimeMs: 5000,
+    );
 
     setState(() => _isLoading = false);
 
@@ -141,12 +151,27 @@ I živjeli su sretno do kraja života. Kraj!
                 _selectedTheme = '';
               }),
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: AppTheme.alanGradient,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: AppTheme.cardShadow,
                 ),
-                child: const Icon(Icons.refresh, color: Colors.white),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.grid_view, color: AppTheme.primaryColor, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Teme',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],

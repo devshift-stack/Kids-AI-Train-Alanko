@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/games/game_item.dart';
 import '../../../services/alan_voice_service.dart';
+import '../../../services/adaptive_learning_service.dart';
 
 class ColorsGameScreen extends ConsumerStatefulWidget {
   const ColorsGameScreen({super.key});
@@ -20,10 +21,10 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
   late List<GameItem> _options;
   late GameItem _currentColor;
   int _score = 0;
-  int _totalQuestions = 0;
   int _streak = 0;
   bool _showResult = false;
   bool _isCorrect = false;
+  DateTime? _questionStartTime;
   late AnimationController _bounceController;
   late AnimationController _pulseController;
 
@@ -44,7 +45,17 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
 
   void _initGame() {
     final langCode = context.locale.languageCode;
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    final params = adaptive.getGameParameters(GameType.colors);
+
+    // Get colors - include advanced if difficulty is high
     _colors = ColorsData.getColors(langCode);
+
+    // Add advanced colors if needed
+    if (params['includeAdvancedColors'] == true) {
+      // Advanced colors already included in ColorsData
+    }
+
     _nextQuestion();
 
     Future.microtask(() {
@@ -68,17 +79,25 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
 
   void _nextQuestion() {
     final random = Random();
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    final params = adaptive.getGameParameters(GameType.colors);
+
     _currentColor = _colors[random.nextInt(_colors.length)];
 
+    // Generate options based on difficulty
+    final optionCount = params['optionCount'] ?? 4;
     final wrongOptions = _colors
         .where((c) => c.id != _currentColor.id)
         .toList()
       ..shuffle();
 
-    _options = [_currentColor, ...wrongOptions.take(3)]..shuffle();
+    _options = [_currentColor, ...wrongOptions.take(optionCount - 1)]..shuffle();
     _showResult = false;
 
     setState(() {});
+
+    // Start timer
+    _questionStartTime = DateTime.now();
 
     Future.delayed(const Duration(milliseconds: 300), () {
       ref.read(alanVoiceServiceProvider).speak(
@@ -91,8 +110,20 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
   void _checkAnswer(GameItem selected) {
     if (_showResult) return;
 
-    _totalQuestions++;
+    // Calculate response time
+    final responseTime = _questionStartTime != null
+        ? DateTime.now().difference(_questionStartTime!).inMilliseconds
+        : 5000;
+
     _isCorrect = selected.id == _currentColor.id;
+
+    // Record result for adaptive learning
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    adaptive.recordResult(
+      gameType: GameType.colors,
+      correct: _isCorrect,
+      responseTimeMs: responseTime,
+    );
 
     if (_isCorrect) {
       _score++;
@@ -106,7 +137,9 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
 
     setState(() => _showResult = true);
 
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    // Auto-advance with adaptive delay
+    final delay = adaptive.getNextQuestionDelay(GameType.colors);
+    Future.delayed(Duration(milliseconds: delay), () {
       if (mounted) _nextQuestion();
     });
   }
@@ -157,6 +190,9 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
   }
 
   Widget _buildHeader() {
+    final adaptive = ref.watch(adaptiveLearningServiceProvider);
+    final summary = adaptive.getPerformanceSummary(GameType.colors);
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -174,14 +210,29 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
             ),
           ),
           const SizedBox(width: 16),
-          Text(
-            'Boje',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.purple.shade700,
+          Expanded(
+            child: Text(
+              'Boje - Farben',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.purple.shade700,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
+          // Difficulty indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _getDifficultyColor(summary['currentDifficulty']),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              _getDifficultyText(summary['currentDifficulty']),
+              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: _repeatSound,
             child: Container(
@@ -200,7 +251,24 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
     );
   }
 
+  Color _getDifficultyColor(double difficulty) {
+    if (difficulty < 0.8) return Colors.green;
+    if (difficulty < 1.2) return Colors.blue;
+    if (difficulty < 1.5) return Colors.orange;
+    return Colors.red;
+  }
+
+  String _getDifficultyText(double difficulty) {
+    if (difficulty < 0.8) return 'Lako';
+    if (difficulty < 1.2) return 'Normal';
+    if (difficulty < 1.5) return 'Teže';
+    return 'Teško';
+  }
+
   Widget _buildScoreBar() {
+    final adaptive = ref.watch(adaptiveLearningServiceProvider);
+    final summary = adaptive.getPerformanceSummary(GameType.colors);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -210,11 +278,9 @@ class _ColorsGameScreenState extends ConsumerState<ColorsGameScreen>
           _buildScoreItem(Icons.local_fire_department, '$_streak', 'Niz', Colors.orange),
           _buildScoreItem(
             Icons.percent,
-            _totalQuestions > 0
-                ? '${((_score / _totalQuestions) * 100).toInt()}%'
-                : '0%',
+            '${summary['recentAccuracy']}%',
             'Tačnost',
-            Colors.green,
+            summary['recentAccuracy'] >= 70 ? Colors.green : Colors.orange,
           ),
         ],
       ),

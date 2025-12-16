@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../services/alan_voice_service.dart';
 import '../../../services/ai_game_service.dart';
 import '../../../services/user_profile_service.dart';
+import '../../../services/adaptive_learning_service.dart';
 
 class AnimalsGameScreen extends ConsumerStatefulWidget {
   const AnimalsGameScreen({super.key});
@@ -16,25 +17,32 @@ class AnimalsGameScreen extends ConsumerStatefulWidget {
 
 class _AnimalsGameScreenState extends ConsumerState<AnimalsGameScreen> {
   int _score = 0;
-  int _totalQuestions = 0;
   bool _isLoading = true;
   bool _showAnswer = false;
+  DateTime? _questionStartTime;
 
   Map<String, dynamic> _currentQuestion = {};
 
-  final List<Map<String, dynamic>> _animals = [
-    {'id': 'cat', 'name': 'Mačka', 'emoji': '🐱', 'sound': 'Mjau!', 'color': Colors.orange},
-    {'id': 'dog', 'name': 'Pas', 'emoji': '🐕', 'sound': 'Vau vau!', 'color': Colors.brown},
-    {'id': 'cow', 'name': 'Krava', 'emoji': '🐄', 'sound': 'Muuu!', 'color': Colors.black},
-    {'id': 'pig', 'name': 'Svinja', 'emoji': '🐷', 'sound': 'Rok rok!', 'color': Colors.pink},
-    {'id': 'chicken', 'name': 'Kokoš', 'emoji': '🐔', 'sound': 'Kokodak!', 'color': Colors.red},
-    {'id': 'duck', 'name': 'Patka', 'emoji': '🦆', 'sound': 'Kva kva!', 'color': Colors.yellow},
-    {'id': 'horse', 'name': 'Konj', 'emoji': '🐴', 'sound': 'Ihaha!', 'color': Colors.brown},
-    {'id': 'sheep', 'name': 'Ovca', 'emoji': '🐑', 'sound': 'Beee!', 'color': Colors.grey},
-    {'id': 'lion', 'name': 'Lav', 'emoji': '🦁', 'sound': 'Rrrr!', 'color': Colors.amber},
-    {'id': 'elephant', 'name': 'Slon', 'emoji': '🐘', 'sound': 'Truuu!', 'color': Colors.blueGrey},
-    {'id': 'monkey', 'name': 'Majmun', 'emoji': '🐵', 'sound': 'Uuu uuu!', 'color': Colors.brown},
-    {'id': 'bird', 'name': 'Ptica', 'emoji': '🐦', 'sound': 'Ćiv ćiv!', 'color': Colors.blue},
+  final List<Map<String, dynamic>> _basicAnimals = [
+    {'id': 'cat', 'name': 'Mačka', 'emoji': '🐱', 'sound': 'Mjau!', 'color': Colors.orange, 'habitat': 'Kuća'},
+    {'id': 'dog', 'name': 'Pas', 'emoji': '🐕', 'sound': 'Vau vau!', 'color': Colors.brown, 'habitat': 'Kuća'},
+    {'id': 'cow', 'name': 'Krava', 'emoji': '🐄', 'sound': 'Muuu!', 'color': Colors.black, 'habitat': 'Farma'},
+    {'id': 'pig', 'name': 'Svinja', 'emoji': '🐷', 'sound': 'Rok rok!', 'color': Colors.pink, 'habitat': 'Farma'},
+    {'id': 'chicken', 'name': 'Kokoš', 'emoji': '🐔', 'sound': 'Kokodak!', 'color': Colors.red, 'habitat': 'Farma'},
+    {'id': 'duck', 'name': 'Patka', 'emoji': '🦆', 'sound': 'Kva kva!', 'color': Colors.yellow, 'habitat': 'Jezero'},
+    {'id': 'horse', 'name': 'Konj', 'emoji': '🐴', 'sound': 'Ihaha!', 'color': Colors.brown, 'habitat': 'Farma'},
+    {'id': 'sheep', 'name': 'Ovca', 'emoji': '🐑', 'sound': 'Beee!', 'color': Colors.grey, 'habitat': 'Farma'},
+  ];
+
+  final List<Map<String, dynamic>> _advancedAnimals = [
+    {'id': 'lion', 'name': 'Lav', 'emoji': '🦁', 'sound': 'Rrrr!', 'color': Colors.amber, 'habitat': 'Afrika', 'diet': 'Meso'},
+    {'id': 'elephant', 'name': 'Slon', 'emoji': '🐘', 'sound': 'Truuu!', 'color': Colors.blueGrey, 'habitat': 'Afrika', 'diet': 'Biljke'},
+    {'id': 'monkey', 'name': 'Majmun', 'emoji': '🐵', 'sound': 'Uuu uuu!', 'color': Colors.brown, 'habitat': 'Džungla', 'diet': 'Voće'},
+    {'id': 'bird', 'name': 'Ptica', 'emoji': '🐦', 'sound': 'Ćiv ćiv!', 'color': Colors.blue, 'habitat': 'Nebo'},
+    {'id': 'penguin', 'name': 'Pingvin', 'emoji': '🐧', 'sound': 'Kvak!', 'color': Colors.black, 'habitat': 'Antarktik', 'diet': 'Riba'},
+    {'id': 'bear', 'name': 'Medvjed', 'emoji': '🐻', 'sound': 'Grrrr!', 'color': Colors.brown, 'habitat': 'Šuma', 'diet': 'Sve'},
+    {'id': 'giraffe', 'name': 'Žirafa', 'emoji': '🦒', 'sound': '...', 'color': Colors.orange, 'habitat': 'Afrika', 'diet': 'Lišće'},
+    {'id': 'dolphin', 'name': 'Delfin', 'emoji': '🐬', 'sound': 'Klik klik!', 'color': Colors.blue, 'habitat': 'More', 'diet': 'Riba'},
   ];
 
   @override
@@ -53,6 +61,16 @@ class _AnimalsGameScreenState extends ConsumerState<AnimalsGameScreen> {
     _nextQuestion();
   }
 
+  List<Map<String, dynamic>> _getAvailableAnimals() {
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    final params = adaptive.getGameParameters(GameType.animals);
+
+    if (params['includeExoticAnimals'] == true) {
+      return [..._basicAnimals, ..._advancedAnimals];
+    }
+    return _basicAnimals;
+  }
+
   Future<void> _nextQuestion() async {
     setState(() {
       _isLoading = true;
@@ -61,16 +79,21 @@ class _AnimalsGameScreenState extends ConsumerState<AnimalsGameScreen> {
 
     final profile = ref.read(activeProfileProvider);
     final age = profile?.age ?? 6;
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    final params = adaptive.getGameParameters(GameType.animals);
 
     // Try AI-generated question
     try {
       final aiGame = ref.read(aiGameServiceProvider);
       _currentQuestion = await aiGame.generateAnimalQuestion(age);
     } catch (e) {
-      _currentQuestion = _getStaticQuestion();
+      _currentQuestion = _getStaticQuestion(params);
     }
 
     setState(() => _isLoading = false);
+
+    // Start timer
+    _questionStartTime = DateTime.now();
 
     // Speak the question
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -81,24 +104,55 @@ class _AnimalsGameScreenState extends ConsumerState<AnimalsGameScreen> {
     });
   }
 
-  Map<String, dynamic> _getStaticQuestion() {
-    final animal = _animals[Random().nextInt(_animals.length)];
-    final questions = [
+  Map<String, dynamic> _getStaticQuestion(Map<String, dynamic> params) {
+    final animals = _getAvailableAnimals();
+    final animal = animals[Random().nextInt(animals.length)];
+
+    List<String> questions = [
       'Kako pravi ${animal['name']}?',
       'Koja životinja pravi "${animal['sound']}"?',
-      'Gdje živi ${animal['name']}?',
     ];
+
+    // Add harder questions based on difficulty
+    if (params['askHabitat'] == true) {
+      questions.add('Gdje živi ${animal['name']}?');
+    }
+    if (params['askDiet'] == true && animal['diet'] != null) {
+      questions.add('Šta jede ${animal['name']}?');
+    }
+
+    final selectedQuestion = questions[Random().nextInt(questions.length)];
+    String answer = animal['sound'];
+
+    if (selectedQuestion.contains('Gdje živi')) {
+      answer = animal['habitat'] ?? 'U prirodi';
+    } else if (selectedQuestion.contains('Šta jede')) {
+      answer = animal['diet'] ?? 'Raznu hranu';
+    }
+
     return {
       'animal': animal['name'],
       'emoji': animal['emoji'],
-      'question': questions[Random().nextInt(questions.length)],
-      'answer': animal['sound'],
+      'question': selectedQuestion,
+      'answer': answer,
     };
   }
 
   void _showAnswerAndContinue() {
-    _totalQuestions++;
+    // Calculate response time
+    final responseTime = _questionStartTime != null
+        ? DateTime.now().difference(_questionStartTime!).inMilliseconds
+        : 5000;
+
     _score++;
+
+    // Record for adaptive learning
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    adaptive.recordResult(
+      gameType: GameType.animals,
+      correct: true, // In this game format, showing answer = learned
+      responseTimeMs: responseTime,
+    );
 
     ref.read(alanVoiceServiceProvider).speak(
       _currentQuestion['answer'] ?? 'Bravo!',
@@ -107,7 +161,9 @@ class _AnimalsGameScreenState extends ConsumerState<AnimalsGameScreen> {
 
     setState(() => _showAnswer = true);
 
-    Future.delayed(const Duration(milliseconds: 2000), () {
+    // Auto-advance with adaptive delay
+    final delay = adaptive.getNextQuestionDelay(GameType.animals);
+    Future.delayed(Duration(milliseconds: delay), () {
       if (mounted) _nextQuestion();
     });
   }
@@ -142,6 +198,9 @@ class _AnimalsGameScreenState extends ConsumerState<AnimalsGameScreen> {
   }
 
   Widget _buildHeader() {
+    final adaptive = ref.watch(adaptiveLearningServiceProvider);
+    final summary = adaptive.getPerformanceSummary(GameType.animals);
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -159,28 +218,68 @@ class _AnimalsGameScreenState extends ConsumerState<AnimalsGameScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          Text(
-            'Životinje - Tiere',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primaryColor,
+          Expanded(
+            child: Text(
+              'Životinje - Tiere',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryColor,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _nextQuestion,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: AppTheme.alanGradient,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.refresh, color: Colors.white),
+          const SizedBox(width: 8),
+          // Difficulty indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: _getDifficultyColor(summary['currentDifficulty']),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _getDifficultyIcon(summary['currentDifficulty']),
+                  color: Colors.white,
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _getDifficultyText(summary['currentDifficulty']),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Color _getDifficultyColor(double difficulty) {
+    if (difficulty < 0.8) return Colors.green;
+    if (difficulty < 1.2) return Colors.blue;
+    if (difficulty < 1.5) return Colors.orange;
+    return Colors.red;
+  }
+
+  IconData _getDifficultyIcon(double difficulty) {
+    if (difficulty < 0.8) return Icons.child_care;
+    if (difficulty < 1.2) return Icons.star;
+    if (difficulty < 1.5) return Icons.star_half;
+    return Icons.whatshot;
+  }
+
+  String _getDifficultyText(double difficulty) {
+    if (difficulty < 0.8) return 'Lako';
+    if (difficulty < 1.2) return 'Normal';
+    if (difficulty < 1.5) return 'Teže';
+    return 'Teško';
   }
 
   Widget _buildScoreBar() {
@@ -272,14 +371,30 @@ class _AnimalsGameScreenState extends ConsumerState<AnimalsGameScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.green, width: 2),
                 ),
-                child: Text(
-                  _currentQuestion['answer'] ?? '',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
+                child: Column(
+                  children: [
+                    Text(
+                      _currentQuestion['answer'] ?? '',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.timer, size: 16, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Nächste Frage kommt automatisch...',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ).animate().fadeIn().scale(),
 

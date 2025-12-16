@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../services/alan_voice_service.dart';
 import '../../../services/ai_game_service.dart';
 import '../../../services/user_profile_service.dart';
+import '../../../services/adaptive_learning_service.dart';
 
 class ShapesGameScreen extends ConsumerStatefulWidget {
   const ShapesGameScreen({super.key});
@@ -20,6 +21,7 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
   bool _isLoading = true;
   bool _showResult = false;
   bool _isCorrect = false;
+  DateTime? _questionStartTime;
 
   Map<String, dynamic> _currentQuestion = {};
   List<Map<String, dynamic>> _shapes = [];
@@ -32,6 +34,14 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
     {'id': 'rectangle', 'name': 'Pravougaonik', 'nameDe': 'Rechteck', 'sides': 4, 'emoji': '▬', 'color': Colors.orange},
     {'id': 'star', 'name': 'Zvijezda', 'nameDe': 'Stern', 'sides': 5, 'emoji': '⭐', 'color': Colors.yellow},
     {'id': 'heart', 'name': 'Srce', 'nameDe': 'Herz', 'sides': 0, 'emoji': '❤️', 'color': Colors.pink},
+  ];
+
+  // Advanced shapes for higher difficulty
+  final List<Map<String, dynamic>> _advancedShapes = [
+    {'id': 'pentagon', 'name': 'Petougao', 'nameDe': 'Fünfeck', 'sides': 5, 'emoji': '⬠', 'color': Colors.purple},
+    {'id': 'hexagon', 'name': 'Šestougao', 'nameDe': 'Sechseck', 'sides': 6, 'emoji': '⬡', 'color': Colors.teal},
+    {'id': 'diamond', 'name': 'Dijamant', 'nameDe': 'Raute', 'sides': 4, 'emoji': '💎', 'color': Colors.cyan},
+    {'id': 'oval', 'name': 'Oval', 'nameDe': 'Oval', 'sides': 0, 'emoji': '🥚', 'color': Colors.lime},
   ];
 
   @override
@@ -50,6 +60,16 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
     _nextQuestion();
   }
 
+  List<Map<String, dynamic>> _getAvailableShapes() {
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    final params = adaptive.getGameParameters(GameType.shapes);
+
+    if (params['includeAdvancedShapes'] == true) {
+      return [..._allShapes, ..._advancedShapes];
+    }
+    return _allShapes;
+  }
+
   Future<void> _nextQuestion() async {
     setState(() {
       _isLoading = true;
@@ -59,6 +79,8 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
 
     final profile = ref.read(activeProfileProvider);
     final age = profile?.age ?? 6;
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    final params = adaptive.getGameParameters(GameType.shapes);
 
     // Try AI-generated question
     try {
@@ -69,14 +91,17 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
       _currentQuestion = _getStaticQuestion();
     }
 
-    // Generate options
-    _shapes = List.from(_allShapes)..shuffle();
-    _shapes = _shapes.take(4).toList();
+    // Generate options based on difficulty
+    final availableShapes = _getAvailableShapes();
+    final optionCount = params['optionCount'] ?? 4;
+
+    _shapes = List.from(availableShapes)..shuffle();
+    _shapes = _shapes.take(optionCount).toList();
 
     // Make sure correct answer is in options
-    final correctShape = _allShapes.firstWhere(
+    final correctShape = availableShapes.firstWhere(
       (s) => s['name'] == _currentQuestion['shape'] || s['nameDe'] == _currentQuestion['shapeDe'],
-      orElse: () => _allShapes.first,
+      orElse: () => availableShapes.first,
     );
 
     if (!_shapes.any((s) => s['id'] == correctShape['id'])) {
@@ -85,6 +110,9 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
     }
 
     setState(() => _isLoading = false);
+
+    // Start timer for response tracking
+    _questionStartTime = DateTime.now();
 
     // Speak the question
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -96,7 +124,8 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
   }
 
   Map<String, dynamic> _getStaticQuestion() {
-    final shape = _allShapes[Random().nextInt(_allShapes.length)];
+    final availableShapes = _getAvailableShapes();
+    final shape = availableShapes[Random().nextInt(availableShapes.length)];
     return {
       'shape': shape['name'],
       'shapeDe': shape['nameDe'],
@@ -108,9 +137,22 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
   void _checkAnswer(Map<String, dynamic> selected) {
     if (_showResult) return;
 
+    // Calculate response time
+    final responseTime = _questionStartTime != null
+        ? DateTime.now().difference(_questionStartTime!).inMilliseconds
+        : 5000;
+
     _totalQuestions++;
     final correctShape = _currentQuestion['shape'] ?? '';
     _isCorrect = selected['name'] == correctShape || selected['nameDe'] == _currentQuestion['shapeDe'];
+
+    // Record result for adaptive learning
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    adaptive.recordResult(
+      gameType: GameType.shapes,
+      correct: _isCorrect,
+      responseTimeMs: responseTime,
+    );
 
     if (_isCorrect) {
       _score++;
@@ -124,7 +166,9 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
       _selectedShapeId = selected['id'];
     });
 
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    // Auto-advance with adaptive delay
+    final delay = adaptive.getNextQuestionDelay(GameType.shapes);
+    Future.delayed(Duration(milliseconds: delay), () {
       if (mounted) _nextQuestion();
     });
   }
@@ -159,6 +203,9 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
   }
 
   Widget _buildHeader() {
+    final adaptive = ref.watch(adaptiveLearningServiceProvider);
+    final summary = adaptive.getPerformanceSummary(GameType.shapes);
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -184,15 +231,31 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
             ),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: _nextQuestion,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: AppTheme.alanGradient,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.refresh, color: Colors.white),
+          // Difficulty indicator instead of refresh button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: _getDifficultyColor(summary['currentDifficulty']),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _getDifficultyIcon(summary['currentDifficulty']),
+                  color: Colors.white,
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _getDifficultyText(summary['currentDifficulty']),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -200,7 +263,31 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
     );
   }
 
+  Color _getDifficultyColor(double difficulty) {
+    if (difficulty < 0.8) return Colors.green;
+    if (difficulty < 1.2) return Colors.blue;
+    if (difficulty < 1.5) return Colors.orange;
+    return Colors.red;
+  }
+
+  IconData _getDifficultyIcon(double difficulty) {
+    if (difficulty < 0.8) return Icons.child_care;
+    if (difficulty < 1.2) return Icons.star;
+    if (difficulty < 1.5) return Icons.star_half;
+    return Icons.whatshot;
+  }
+
+  String _getDifficultyText(double difficulty) {
+    if (difficulty < 0.8) return 'Lako';
+    if (difficulty < 1.2) return 'Normal';
+    if (difficulty < 1.5) return 'Teže';
+    return 'Teško';
+  }
+
   Widget _buildScoreBar() {
+    final adaptive = ref.watch(adaptiveLearningServiceProvider);
+    final summary = adaptive.getPerformanceSummary(GameType.shapes);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -210,9 +297,9 @@ class _ShapesGameScreenState extends ConsumerState<ShapesGameScreen> {
           const SizedBox(width: 20),
           _buildScoreItem(
             Icons.percent,
-            _totalQuestions > 0 ? '${((_score / _totalQuestions) * 100).toInt()}%' : '0%',
+            '${summary['recentAccuracy']}%',
             'Tačnost',
-            Colors.green,
+            summary['recentAccuracy'] >= 70 ? Colors.green : Colors.orange,
           ),
         ],
       ),

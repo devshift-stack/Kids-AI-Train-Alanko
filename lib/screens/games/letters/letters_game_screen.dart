@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../models/games/game_item.dart';
 import '../../../services/alan_voice_service.dart';
 import '../../../services/age_adaptive_service.dart';
+import '../../../services/adaptive_learning_service.dart';
 
 class LettersGameScreen extends ConsumerStatefulWidget {
   const LettersGameScreen({super.key});
@@ -20,10 +21,10 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
   late List<GameItem> _options;
   late GameItem _currentLetter;
   int _score = 0;
-  int _totalQuestions = 0;
   int _streak = 0;
   bool _showResult = false;
   bool _isCorrect = false;
+  DateTime? _questionStartTime;
   late AnimationController _bounceController;
 
   @override
@@ -38,15 +39,23 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
 
   void _initGame() {
     final ageGroup = ref.read(currentAgeGroupProvider);
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    final params = adaptive.getGameParameters(GameType.letters);
 
-    // Adjust difficulty based on age
-    final letterCount = switch (ageGroup) {
+    // Adjust difficulty based on age and adaptive learning
+    int letterCount = switch (ageGroup) {
       AgeGroup.preschool => 10,
       AgeGroup.earlySchool => 20,
       AgeGroup.lateSchool => LettersData.bosnianAlphabet.length,
     };
 
-    _letters = LettersData.bosnianAlphabet.take(letterCount).toList();
+    // Include harder letters if difficulty is high
+    if (params['includeHardLetters'] == true) {
+      _letters = LettersData.bosnianAlphabet.toList();
+    } else {
+      _letters = LettersData.bosnianAlphabet.take(letterCount).toList();
+    }
+
     _nextQuestion();
 
     // Alan greeting
@@ -60,18 +69,25 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
 
   void _nextQuestion() {
     final random = Random();
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    final params = adaptive.getGameParameters(GameType.letters);
+
     _currentLetter = _letters[random.nextInt(_letters.length)];
 
-    // Generate options (1 correct + 3 wrong)
+    // Generate options based on difficulty
+    final optionCount = params['optionCount'] ?? 4;
     final wrongOptions = _letters
         .where((l) => l.id != _currentLetter.id)
         .toList()
       ..shuffle();
 
-    _options = [_currentLetter, ...wrongOptions.take(3)]..shuffle();
+    _options = [_currentLetter, ...wrongOptions.take(optionCount - 1)]..shuffle();
     _showResult = false;
 
     setState(() {});
+
+    // Start timer for response tracking
+    _questionStartTime = DateTime.now();
 
     // Speak the letter
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -85,8 +101,20 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
   void _checkAnswer(GameItem selected) {
     if (_showResult) return;
 
-    _totalQuestions++;
+    // Calculate response time
+    final responseTime = _questionStartTime != null
+        ? DateTime.now().difference(_questionStartTime!).inMilliseconds
+        : 5000;
+
     _isCorrect = selected.id == _currentLetter.id;
+
+    // Record result for adaptive learning
+    final adaptive = ref.read(adaptiveLearningServiceProvider);
+    adaptive.recordResult(
+      gameType: GameType.letters,
+      correct: _isCorrect,
+      responseTimeMs: responseTime,
+    );
 
     if (_isCorrect) {
       _score++;
@@ -100,8 +128,9 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
 
     setState(() => _showResult = true);
 
-    // Next question after delay
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    // Auto-advance with adaptive delay
+    final delay = adaptive.getNextQuestionDelay(GameType.letters);
+    Future.delayed(Duration(milliseconds: delay), () {
       if (mounted) _nextQuestion();
     });
   }
@@ -162,6 +191,9 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
   }
 
   Widget _buildHeader() {
+    final adaptive = ref.watch(adaptiveLearningServiceProvider);
+    final summary = adaptive.getPerformanceSummary(GameType.letters);
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -179,14 +211,29 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
             ),
           ),
           const SizedBox(width: 16),
-          Text(
-            'Slova - ABC',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primaryColor,
+          Expanded(
+            child: Text(
+              'Slova - ABC',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryColor,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
+          // Difficulty indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _getDifficultyColor(summary['currentDifficulty']),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              _getDifficultyText(summary['currentDifficulty']),
+              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 8),
           // Repeat sound button
           GestureDetector(
             onTap: _repeatSound,
@@ -205,7 +252,24 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
     );
   }
 
+  Color _getDifficultyColor(double difficulty) {
+    if (difficulty < 0.8) return Colors.green;
+    if (difficulty < 1.2) return Colors.blue;
+    if (difficulty < 1.5) return Colors.orange;
+    return Colors.red;
+  }
+
+  String _getDifficultyText(double difficulty) {
+    if (difficulty < 0.8) return 'Lako';
+    if (difficulty < 1.2) return 'Normal';
+    if (difficulty < 1.5) return 'Teže';
+    return 'Teško';
+  }
+
   Widget _buildScoreBar() {
+    final adaptive = ref.watch(adaptiveLearningServiceProvider);
+    final summary = adaptive.getPerformanceSummary(GameType.letters);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -215,11 +279,9 @@ class _LettersGameScreenState extends ConsumerState<LettersGameScreen>
           _buildScoreItem(Icons.local_fire_department, '$_streak', 'Niz', Colors.orange),
           _buildScoreItem(
             Icons.percent,
-            _totalQuestions > 0
-                ? '${((_score / _totalQuestions) * 100).toInt()}%'
-                : '0%',
+            '${summary['recentAccuracy']}%',
             'Tačnost',
-            Colors.green,
+            summary['recentAccuracy'] >= 70 ? Colors.green : Colors.orange,
           ),
         ],
       ),
