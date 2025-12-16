@@ -37,6 +37,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 }
 
+/// Alanko App Theme
 class AppTheme {
   AppTheme._();
 
@@ -51,9 +52,9 @@ class AppTheme {
   static const Color warningColor = Color(0xFFFFB74D);
 
   // Age Group Colors
-  static const Color preschoolColor = Color(0xFFFFB347); // Warm orange
-  static const Color earlySchoolColor = Color(0xFF87CEEB); // Sky blue
-  static const Color lateSchoolColor = Color(0xFF98D8C8); // Mint green
+  static const Color preschoolColor = Color(0xFFFFB347);
+  static const Color earlySchoolColor = Color(0xFF87CEEB);
+  static const Color lateSchoolColor = Color(0xFF98D8C8);
 
   // Text Colors
   static const Color textPrimary = Color(0xFF2D3142);
@@ -104,7 +105,20 @@ class AppTheme {
         ),
       ];
 
-  // Theme Data
+  // Age-specific helpers
+  static Color getAgeGroupColor(int age) {
+    if (age <= 5) return preschoolColor;
+    if (age <= 8) return earlySchoolColor;
+    return lateSchoolColor;
+  }
+
+  static double getFontSizeForAge(int age, double baseSize) {
+    if (age <= 5) return baseSize * 1.3;
+    if (age <= 8) return baseSize * 1.15;
+    return baseSize;
+  }
+
+  // Light Theme
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -186,19 +200,6 @@ class AppTheme {
         iconTheme: const IconThemeData(color: textPrimary),
       ),
     );
-  }
-
-  // Age-specific theme adjustments
-  static Color getAgeGroupColor(int age) {
-    if (age <= 5) return preschoolColor;
-    if (age <= 8) return earlySchoolColor;
-    return lateSchoolColor;
-  }
-
-  static double getFontSizeForAge(int age, double baseSize) {
-    if (age <= 5) return baseSize * 1.3; // Larger for preschool
-    if (age <= 8) return baseSize * 1.15; // Medium for early school
-    return baseSize; // Normal for late school
   }
 
   // Dark Theme
