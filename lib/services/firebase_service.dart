@@ -8,10 +8,26 @@ class FirebaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  bool _offlineEnabled = false;
 
   // Current user
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => currentUser != null;
+
+  // Enable offline persistence
+  Future<void> enableOfflineMode() async {
+    if (_offlineEnabled) return;
+    try {
+      _firestore.settings = const Settings(
+        persistenceEnabled: true,
+        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+      );
+      _offlineEnabled = true;
+      debugPrint('Firebase: Offline mode enabled');
+    } catch (e) {
+      debugPrint('Firebase Offline Error: $e');
+    }
+  }
 
   // Auth methods
   Future<UserCredential?> signInAnonymously() async {

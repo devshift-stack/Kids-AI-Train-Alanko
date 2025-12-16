@@ -247,7 +247,67 @@ class ParentalControlService extends ChangeNotifier {
   // Verify parent PIN
   bool verifyPin(String pin) {
     if (!_settings.parentPinRequired) return true;
+    if (_settings.parentPin == null) return true;
     return _settings.parentPin == pin;
+  }
+
+  // Check if PIN is set up
+  bool get isPinSetUp => _settings.parentPin != null && _settings.parentPin!.isNotEmpty;
+
+  // Set up parent PIN
+  Future<bool> setupPin(String newPin) async {
+    if (newPin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(newPin)) {
+      return false;
+    }
+
+    _settings = _settings.copyWith(
+      parentPin: newPin,
+      parentPinRequired: true,
+    );
+    await _saveLocalSettings();
+    notifyListeners();
+    return true;
+  }
+
+  // Change parent PIN (requires old PIN verification)
+  Future<bool> changePin(String oldPin, String newPin) async {
+    if (!verifyPin(oldPin)) {
+      return false;
+    }
+
+    if (newPin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(newPin)) {
+      return false;
+    }
+
+    _settings = _settings.copyWith(parentPin: newPin);
+    await _saveLocalSettings();
+    notifyListeners();
+    return true;
+  }
+
+  // Remove PIN protection
+  Future<bool> removePin(String currentPin) async {
+    if (!verifyPin(currentPin)) {
+      return false;
+    }
+
+    _settings = _settings.copyWith(
+      parentPin: null,
+      parentPinRequired: false,
+    );
+    await _saveLocalSettings();
+    notifyListeners();
+    return true;
+  }
+
+  // Toggle PIN requirement
+  Future<void> setPinRequired(bool required, {String? pin}) async {
+    _settings = _settings.copyWith(
+      parentPinRequired: required,
+      parentPin: pin ?? _settings.parentPin,
+    );
+    await _saveLocalSettings();
+    notifyListeners();
   }
 }
 

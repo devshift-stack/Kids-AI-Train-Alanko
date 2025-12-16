@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/safe_videos.dart';
 import '../../services/parental_control_service.dart';
+import '../../services/user_profile_service.dart';
 import 'task_gate_screen.dart';
 
 class VideoRewardScreen extends ConsumerStatefulWidget {
@@ -20,23 +22,27 @@ class _VideoRewardScreenState extends ConsumerState<VideoRewardScreen> {
   Timer? _watchTimer;
   int _secondsWatched = 0;
   bool _isPaused = false;
-
-  // Sample safe kids videos (replace with curated list)
-  static const List<Map<String, String>> _sampleVideos = [
-    {'id': 'dQw4w9WgXcQ', 'title': 'Kinderlieder Mix'},
-    {'id': 'hT_nvWreIhg', 'title': 'Zahlen lernen'},
-    {'id': 'zZlSjT6V8vE', 'title': 'ABC Lied'},
-  ];
+  late List<Map<String, String>> _videos;
 
   @override
   void initState() {
     super.initState();
+    _loadVideos();
     _initializePlayer();
     _startWatchSession();
   }
 
+  void _loadVideos() {
+    final profile = ref.read(activeProfileProvider);
+    final languageCode = profile?.languageCode ?? 'de';
+    _videos = SafeVideos.getByLanguage(languageCode);
+    if (_videos.isEmpty) {
+      _videos = SafeVideos.german; // Fallback
+    }
+  }
+
   void _initializePlayer() {
-    final videoId = widget.videoId ?? _sampleVideos.first['id']!;
+    final videoId = widget.videoId ?? _videos.first['id']!;
     _controller = YoutubePlayerController(
       initialVideoId: videoId,
       flags: const YoutubePlayerFlags(
@@ -223,9 +229,9 @@ class _VideoRewardScreenState extends ConsumerState<VideoRewardScreen> {
                   Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      itemCount: _sampleVideos.length,
+                      itemCount: _videos.length,
                       itemBuilder: (context, index) {
-                        final video = _sampleVideos[index];
+                        final video = _videos[index];
                         final isPlaying = _controller.metadata.videoId == video['id'];
 
                         return Card(
