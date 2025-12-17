@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/age_adaptive_service.dart';
-import '../../services/youtube_reward_service.dart';
 import '../../services/parent_child_service.dart';
 import '../../models/youtube/youtube_settings.dart';
 

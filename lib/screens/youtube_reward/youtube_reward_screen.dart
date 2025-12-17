@@ -93,7 +93,7 @@ class _YouTubeRewardScreenState extends ConsumerState<YouTubeRewardScreen> {
       
       ref.read(alanVoiceServiceProvider).speak(
         'Toll gemacht! Weiter schauen!',
-        mood: AlanMood.celebrating,
+        mood: AlanMood.excited,
       );
     }
   }

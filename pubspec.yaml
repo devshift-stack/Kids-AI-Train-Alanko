@@ -69,6 +69,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^6.1.0
 
+  # App Enhancements
+  in_app_review: ^2.0.10
+  home_widget: ^0.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -84,3 +88,4 @@ flutter:
 
   assets:
     - assets/locales/
+    - assets/images/
