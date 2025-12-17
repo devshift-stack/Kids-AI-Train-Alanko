@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = wonderbox
+PRODUCT_NAME = Alanko AI
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.wonderbox.wonderbox
+PRODUCT_BUNDLE_IDENTIFIER = com.alanko.ai
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.wonderbox. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2025 Alanko AI. All rights reserved.
