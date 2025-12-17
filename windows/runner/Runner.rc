@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.wonderbox" "\0"
-            VALUE "FileDescription", "wonderbox" "\0"
+            VALUE "CompanyName", "Alanko AI" "\0"
+            VALUE "FileDescription", "Alanko AI" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "wonderbox" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.wonderbox. All rights reserved." "\0"
-            VALUE "OriginalFilename", "wonderbox.exe" "\0"
-            VALUE "ProductName", "wonderbox" "\0"
+            VALUE "InternalName", "alanko" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 Alanko AI. All rights reserved." "\0"
+            VALUE "OriginalFilename", "alanko.exe" "\0"
+            VALUE "ProductName", "Alanko AI" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -142,9 +142,7 @@ class ParentChildService extends ChangeNotifier {
       
       notifyListeners();
     } catch (e) {
-      if (kDebugMode) {
-        print('Error loading linked children: $e');
-      }
+      debugPrint('Error loading linked children: $e');
     }
   }
   

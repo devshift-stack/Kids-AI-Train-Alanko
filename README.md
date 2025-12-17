@@ -1,6 +1,6 @@
-# wonderbox
+# Alanko AI
 
-A new Flutter project.
+Educational app for children ages 3-12 with AI voice assistant.
 
 ## Getting Started
 
