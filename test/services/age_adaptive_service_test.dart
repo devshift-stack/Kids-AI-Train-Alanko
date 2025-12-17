@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:kids_ai_train_alanko/services/age_adaptive_service.dart';
+import 'package:alanko_ai/services/age_adaptive_service.dart';
 
 void main() {
   group('AgeAdaptiveSettings', () {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kids_ai_train_alanko/models/games/game_item.dart';
+import 'package:alanko_ai/models/games/game_item.dart';
 
 void main() {
   group('GameResult', () {

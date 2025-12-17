@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kids_ai_train_alanko/models/child_profile.dart';
+import 'package:alanko_ai/models/child_profile.dart';
 
 void main() {
   group('ChildProfile', () {
