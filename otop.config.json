@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "repo": { "name": "Kids-AI-Train-Alanko", "type": "unknown" },
+  "backend": {
+    "framework": "",
+    "openapi": { "file": "", "format": "" },
+    "health_hints_sample": 
+  },
+  "frontend": {
+    "framework": "",
+    "api_config_hints_sample": ,
+    "ui_ids": { "data_testid": "LOW", "data_otop_id": "LOW" }
+  }
+}
