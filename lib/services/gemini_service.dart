@@ -4,8 +4,8 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'user_profile_service.dart';
 
 class GeminiService {
-  // Free tier API key - 15 requests/minute, 1500/day
-  static const String _apiKey = 'AIzaSyD5jBRl-Ti0r_uSyx5JW24H3CySQ8RWrS8';
+  // API key from environment variable (dart-define)
+  static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
 
   GenerativeModel? _model;
   ChatSession? _chat;
