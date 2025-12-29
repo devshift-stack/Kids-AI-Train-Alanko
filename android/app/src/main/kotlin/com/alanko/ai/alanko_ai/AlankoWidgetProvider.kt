@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetProvider
+import com.alanko.ai.alanko_ai.R
 
 class AlankoWidgetProvider : HomeWidgetProvider() {
 
